@@ -192,6 +192,7 @@ async fn publish_and_record_claim(
         signer,
         service.miden_store_dir.clone(),
         service.miden_node_url.clone(),
+        service.miden_api_key.clone(),
     )
     .await?;
     tracing::info!(

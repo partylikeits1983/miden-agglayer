@@ -334,6 +334,7 @@ pub async fn publish_claim(
     signer: alloy::primitives::Address,
     store_dir: std::path::PathBuf,
     node_url: String,
+    api_key: Option<String>,
 ) -> anyhow::Result<PublishClaimTxn> {
     let result = Arc::new(OnceLock::<PublishClaimTxn>::new());
     let result_inner = result.clone();
@@ -408,8 +409,9 @@ pub async fn publish_claim(
 
             let ep = Endpoint::try_from(node_url.as_str())
                 .map_err(|e| anyhow::anyhow!("invalid node URL: {e}"))?;
+            let rpc = crate::miden_client::build_rpc_client(&ep, 10_000, api_key.as_deref());
             let mut client = ClientBuilder::new()
-                .grpc_client(&ep, Some(10_000))
+                .rpc(rpc)
                 .sqlite_store(store_path)
                 .authenticator(keystore)
                 .in_debug_mode(DebugMode::Enabled)

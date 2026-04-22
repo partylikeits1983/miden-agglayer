@@ -83,6 +83,14 @@ struct Command {
     /// Enable Miden VM debug mode (verbose execution traces). Disable in production.
     #[arg(long, env = "MIDEN_DEBUG")]
     miden_debug: bool,
+
+    /// API key sent as `authorization: Bearer <key>` on every outbound Miden gRPC call.
+    ///
+    /// Required when the node sits behind a gateway that rate-limits unauthenticated
+    /// traffic (e.g. `miden-testnet.eu-central-8.gateway.fm`). Safe to omit when
+    /// targeting the node directly. Redacted in log output.
+    #[arg(long, env = "MIDEN_API_KEY")]
+    miden_api_key: Option<String>,
 }
 
 impl std::fmt::Debug for Command {
@@ -108,6 +116,10 @@ impl std::fmt::Debug for Command {
             )
             .field("ger_l1_address", &self.ger_l1_address)
             .field("miden_debug", &self.miden_debug)
+            .field(
+                "miden_api_key",
+                &self.miden_api_key.as_ref().map(|_| "[REDACTED]"),
+            )
             .finish()
     }
 }
@@ -165,6 +177,7 @@ async fn main() -> anyhow::Result<()> {
         let init_client = MidenClient::new(
             miden_store_dir.clone(),
             command.miden_node.clone(),
+            command.miden_api_key.clone(),
             sync_listeners,
             command.miden_debug,
         )?;
@@ -234,6 +247,7 @@ async fn main() -> anyhow::Result<()> {
     let client = MidenClient::new(
         miden_store_dir.clone(),
         command.miden_node,
+        command.miden_api_key.clone(),
         sync_listeners,
         command.miden_debug,
     )?;
@@ -270,6 +284,7 @@ async fn main() -> anyhow::Result<()> {
     // miden_node was moved into MidenClient::new, re-read from env
     state.miden_node_url =
         std::env::var("MIDEN_NODE_URL").unwrap_or_else(|_| "http://miden-node:57291".to_string());
+    state.miden_api_key = command.miden_api_key;
 
     // Initialize metrics
     let metrics_handle = metrics_exporter_prometheus::PrometheusBuilder::new()

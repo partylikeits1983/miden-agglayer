@@ -21,6 +21,10 @@ pub struct ServiceState {
     pub miden_store_dir: PathBuf,
     /// Miden node URL (for building fresh clients)
     pub miden_node_url: String,
+    /// Optional `authorization: Bearer <key>` header value forwarded to every Miden gRPC
+    /// call. `None` when talking to the node directly; `Some(...)` when fronted by a
+    /// gateway that rate-limits unauthenticated traffic. Redact if you ever log this.
+    pub miden_api_key: Option<String>,
 }
 
 const fn assert_sync<T: Send + Sync>() {}
@@ -46,6 +50,7 @@ impl ServiceState {
             ger_l1_address: None,
             miden_store_dir: PathBuf::new(),
             miden_node_url: String::new(),
+            miden_api_key: None,
         }
     }
 }
